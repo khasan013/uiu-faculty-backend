@@ -29,23 +29,4 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 
 const User = mongoose.model("User", userSchema);
 
-// ===== AUTO CREATE DEFAULT ADMIN =====
-const createDefaultAdmin = async () => {
-  const adminExists = await User.findOne({ email: "khasan" });
-
-  if (!adminExists) {
-    await User.create({
-      name: "Khalid Hasan",
-      email: "khasan@gmail.com",
-      password: "1122@",
-      role: "admin",
-    });
-    console.log("Default Admin Created ✅");
-  } else {
-    console.log("Admin Already Exists 🔐");
-  }
-};
-
-createDefaultAdmin();
-
 module.exports = User;
