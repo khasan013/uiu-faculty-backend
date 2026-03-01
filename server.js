@@ -5,16 +5,24 @@ const connectDB = require("./config/db");
 
 const app = express();
 
-connectDB();
-
-require("./models/User");
-require("./models/Teacher");
-require("./models/Review");
-require("./models/Comment");
-
 app.use(cors());
 app.use(express.json());
 
+let dbConnected = false;
+
+const init = async () => {
+  if (!dbConnected) {
+    await connectDB();
+    dbConnected = true;
+  }
+};
+
+app.use(async (req, res, next) => {
+  await init();
+  next();
+});
+
+// Routes
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/teachers", require("./routes/teacherRoutes"));
 app.use("/api/reviews", require("./routes/reviewRoutes"));
@@ -24,6 +32,4 @@ app.get("/", (req, res) => {
   res.send("UIU Students API Running 🚀");
 });
 
-// 🚨 REMOVE app.listen()
-// Export instead
 module.exports = app;
