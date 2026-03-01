@@ -36,7 +36,7 @@ const createDefaultAdmin = async () => {
   if (!adminExists) {
     await User.create({
       name: "Khalid Hasan",
-      email: "khasan",
+      email: "khasan@gmail.com",
       password: "1122@",
       role: "admin",
     });
