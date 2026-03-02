@@ -4,7 +4,7 @@ const User = require("../models/User");
 
 const router = express.Router();
 
-// Generate JWT
+// ================= JWT GENERATOR =================
 const generateToken = (id, role) => {
   return jwt.sign(
     { id, role },
@@ -16,7 +16,13 @@ const generateToken = (id, role) => {
 // ================= REGISTER =================
 router.post("/register", async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const name = req.body.name?.trim();
+    const email = req.body.email?.trim().toLowerCase();
+    const password = req.body.password;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
 
     const userExists = await User.findOne({ email });
 
@@ -39,7 +45,7 @@ router.post("/register", async (req, res) => {
     });
 
   } catch (error) {
-    console.error(error);
+    console.error("REGISTER ERROR:", error);
     res.status(500).json({ message: "Server Error" });
   }
 });
@@ -47,7 +53,12 @@ router.post("/register", async (req, res) => {
 // ================= LOGIN =================
 router.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const email = req.body.email?.trim().toLowerCase();
+    const password = req.body.password;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password required" });
+    }
 
     const user = await User.findOne({ email });
 
@@ -70,7 +81,7 @@ router.post("/login", async (req, res) => {
     });
 
   } catch (error) {
-    console.error(error);
+    console.error("LOGIN ERROR:", error);
     res.status(500).json({ message: "Server Error" });
   }
 });
