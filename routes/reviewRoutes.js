@@ -11,21 +11,17 @@ router.post("/", protect, async (req, res) => {
     const { teacherId, text, rating } = req.body;
 
     const review = await Review.create({
-      teacher: teacherId,      // ✅ match model field
-      user: req.user._id,      // ✅ match model field
+      teacherId: teacherId,          // ✅ matches model
+      userId: req.user._id,          // ✅ matches model
       text,
       rating,
     });
 
-    // Recalculate average rating
-    const reviews = await Review.find({ teacher: teacherId });
+    // 🔥 Recalculate average rating
+    const reviews = await Review.find({ teacherId });
 
-    const totalRating = reviews.reduce(
-      (acc, item) => acc + item.rating,
-      0
-    );
-
-    const average = totalRating / reviews.length;
+    const total = reviews.reduce((acc, item) => acc + item.rating, 0);
+    const average = total / reviews.length;
 
     await Teacher.findByIdAndUpdate(teacherId, {
       averageRating: Number(average.toFixed(1)),
@@ -35,7 +31,8 @@ router.post("/", protect, async (req, res) => {
     res.json(review);
 
   } catch (error) {
-    res.status(500).json({ message: "Failed to add review" });
+    console.error("ADD REVIEW ERROR:", error);
+    res.status(500).json({ message: "Server error while adding review" });
   }
 });
 
@@ -43,12 +40,13 @@ router.post("/", protect, async (req, res) => {
 router.get("/:teacherId", async (req, res) => {
   try {
     const reviews = await Review.find({
-      teacher: req.params.teacherId,   // ✅ match model
-    }).populate("user", "name");
+      teacherId: req.params.teacherId,
+    }).populate("userId", "name");   // ✅ matches model
 
     res.json(reviews);
 
   } catch (error) {
+    console.error("GET REVIEWS ERROR:", error);
     res.status(500).json({ message: "Failed to fetch reviews" });
   }
 });
