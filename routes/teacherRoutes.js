@@ -16,7 +16,7 @@ router.get("/", async (req, res) => {
 });
 
 // ADD teacher (Admin only)
-router.post("/", protect, adminOnly, async (req, res) => {
+router.post("/", protect, async (req, res) => {
   try {
     const { name, department, designation } = req.body;
 

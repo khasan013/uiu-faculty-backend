@@ -1,35 +1,89 @@
-require("dotenv").config();
 const express = require("express");
-const cors = require("cors");
-const connectDB = require("./config/db");
+const jwt = require("jsonwebtoken");
+const User = require("../models/User");
 
-const app = express();
+const router = express.Router();
 
-app.use(cors());
-app.use(express.json());
-
-let dbConnected = false;
-
-const init = async () => {
-  if (!dbConnected) {
-    await connectDB();
-    dbConnected = true;
-  }
+// Generate JWT
+const generateToken = (id, role) => {
+  return jwt.sign(
+    { id, role },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
 };
 
-app.use(async (req, res, next) => {
-  await init();
-  next();
+// ================= REGISTER =================
+router.post("/register", async (req, res) => {
+  try {
+    const name = req.body.name?.trim();
+    const email = req.body.email?.trim().toLowerCase();
+    const password = req.body.password?.trim();
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const userExists = await User.findOne({ email });
+
+    if (userExists) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    const user = await User.create({
+      name,
+      email,
+      password,
+    });
+
+    res.status(201).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      token: generateToken(user._id, user.role),
+    });
+
+  } catch (error) {
+    console.error("REGISTER ERROR:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
 });
 
-// Routes
-app.use("/api/auth", require("./routes/authRoutes"));
-app.use("/api/teachers", require("./routes/teacherRoutes"));
-app.use("/api/reviews", require("./routes/reviewRoutes"));
-app.use("/api/comments", require("./routes/commentRoutes"));
+// ================= LOGIN =================
+router.post("/login", async (req, res) => {
+  try {
+    const email = req.body.email?.trim().toLowerCase();
+    const password = req.body.password?.trim();
 
-app.get("/", (req, res) => {
-  res.send("UIU Students API Running 🚀");
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password required" });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    const isMatch = await user.matchPassword(password);
+
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      token: generateToken(user._id, user.role),
+    });
+
+  } catch (error) {
+    console.error("LOGIN ERROR:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
 });
 
-module.exports = app;
+module.exports = router;
