@@ -1,5 +1,6 @@
 const express = require("express");
 const Teacher = require("../models/Teacher");
+const { protect } = require("../middleware/authMiddleware"); // ✅ ADD THIS
 
 const router = express.Router();
 
