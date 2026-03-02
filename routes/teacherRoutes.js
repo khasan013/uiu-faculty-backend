@@ -1,10 +1,9 @@
 const express = require("express");
 const Teacher = require("../models/Teacher");
-const { protect } = require("../middleware/authMiddleware"); // ✅ ADD THIS
 
 const router = express.Router();
 
-// GET all teachers
+// GET all teachers (Public)
 router.get("/", async (req, res) => {
   try {
     const teachers = await Teacher.find();
@@ -15,8 +14,8 @@ router.get("/", async (req, res) => {
   }
 });
 
-// ADD teacher (Admin only)
-router.post("/", protect, async (req, res) => {
+// ADD teacher (Public)
+router.post("/", async (req, res) => {
   try {
     const { name, department, designation } = req.body;
 
