@@ -1,6 +1,5 @@
 const express = require("express");
 const Teacher = require("../models/Teacher");
-const { protect, adminOnly } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
