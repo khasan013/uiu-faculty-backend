@@ -5,41 +5,52 @@ const { protect } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-// Add review + auto update rating
+// ================= ADD REVIEW =================
 router.post("/", protect, async (req, res) => {
-  const { teacherId, text, rating } = req.body;
+  try {
+    const { teacherId, text, rating } = req.body;
 
-  // Create review
-  const review = await Review.create({
-    teacherId,
-    userId: req.user._id,
-    text,
-    rating,
-  });
+    const review = await Review.create({
+      teacher: teacherId,      // ✅ match model field
+      user: req.user._id,      // ✅ match model field
+      text,
+      rating,
+    });
 
-  // 🔥 Recalculate average rating
-  const reviews = await Review.find({ teacherId });
+    // Recalculate average rating
+    const reviews = await Review.find({ teacher: teacherId });
 
-  const totalRating = reviews.reduce((acc, item) => acc + item.rating, 0);
-  const average = totalRating / reviews.length;
+    const totalRating = reviews.reduce(
+      (acc, item) => acc + item.rating,
+      0
+    );
 
-  // Update teacher
-  await Teacher.findByIdAndUpdate(teacherId, {
-    averageRating: average.toFixed(1),
-    reviewCount: reviews.length,
-  });
+    const average = totalRating / reviews.length;
 
-  res.json(review);
+    await Teacher.findByIdAndUpdate(teacherId, {
+      averageRating: Number(average.toFixed(1)),
+      reviewCount: reviews.length,
+    });
+
+    res.json(review);
+
+  } catch (error) {
+    res.status(500).json({ message: "Failed to add review" });
+  }
 });
 
-
-// Get reviews by teacher
+// ================= GET REVIEWS =================
 router.get("/:teacherId", async (req, res) => {
-  const reviews = await Review.find({
-    teacherId: req.params.teacherId,
-  }).populate("userId", "name");
+  try {
+    const reviews = await Review.find({
+      teacher: req.params.teacherId,   // ✅ match model
+    }).populate("user", "name");
 
-  res.json(reviews);
+    res.json(reviews);
+
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch reviews" });
+  }
 });
 
 module.exports = router;
